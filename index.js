@@ -1,9 +1,9 @@
-// import module npm
+// import module third party
 require("dotenv").config();
-require("./src/config/fs");
 const express = require("express");
 
-// import module buatan sendiri
+// import module local
+require("./src/config/Run");
 const StorageRoute = require("./src/routes/StorageRoute");
 const ItemRoute = require("./src/routes/ItemRoute");
 const JoinRoute = require("./src/routes/JoinRoute");
@@ -17,12 +17,15 @@ const { PORT } = process.env;
 // parsing data dari input body ke json
 app.use(express.json());
 
-// route kita
+// daftar route
 app.use("/storage", StorageRoute);
 app.use("/item", ItemRoute);
 app.use("/join", JoinRoute);
 app.use("/", HomeRoute);
 app.use("*", ErrorRoute);
 
-// jalankan local server
+// bersihkan console
+console.clear();
+
+// jalankan & tes koneksi server
 app.listen(PORT, () => console.log(`Server up and running on :${PORT}...`));

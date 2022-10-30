@@ -1,244 +1,153 @@
-// import module buatan sendiri
-const { load, save } = require("../config/modify");
+// import module local
+const prompt = require("../config/Query");
 
 // middleware tampil semua data
-exports.getItems = (req, res) => {
-  const items = load("items");
-  // variabel items berisi semua object dari items.json yang dibungkus array
-
-  if (items.length == 0)
-    return res.status(404).json({
-      message: "Data masih kosong!",
+exports.readItems = async (req, res) => {
+  try {
+    const items = await prompt(`CALL read_items()`);
+    if (items[0].length === 0)
+      return res.status(404).json({
+        message: "Data masih kosong!",
+      });
+    res.status(200).json({
+      message: "Data berhasil ditampilkan!",
+      items: items[0],
     });
-
-  res.status(200).json({
-    message: "Data berhasil ditampilkan!",
-    items, // tampilin disini
-  });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
-// middleware tampil salah satu data
-// berdasarkan id dari parameter url
-exports.getItemById = (req, res) => {
-  const { id } = req.params;
-
-  const items = load("items");
-  // variabel items berisi semua object dari items.json yang dibungkus array
-
-  const item = items.find((item) => item.id === parseInt(id));
-  // variabel item berisi salah satu object dari items.json
-  // berdasarkan id yg sama dengan id parameter url
-
-  if (!item)
-    return res.status(404).json({
-      message: "Data tidak ditemukan!",
+// middleware tampil salah satu data berdasarkan id dari parameter url
+exports.readItemById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const item = await prompt(`CALL read_itemsID("${id}")`);
+    if (item[0].length === 0)
+      return res.status(404).json({
+        message: "Data tidak ditemukan!",
+      });
+    res.status(200).json({
+      message: "Data berhasil ditampilkan!",
+      item: item[0],
     });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 
-  res.status(200).json({
-    message: "Data berhasil ditampilkan!",
-    item, // tampilin disini
-  });
+// middleware cari data di parent
+exports.searchItem = async (req, res) => {
+  try {
+    const { nama } = req.body;
+
+    // cuma 1 data yang muncul, yaitu data yang dicari
+    const sql_search_joins_items = await prompt(
+      `CALL read_joins_itemsNama ("${nama}")`
+    );
+    if (sql_search_joins_items[0].length === 0)
+      return res.status(404).json({
+        message: "Data tidak ditemukan!",
+      });
+
+    const sql_joins = await prompt(
+      `CALL read_joinsID ("${sql_search_joins_items[0][0].joins_id}")`
+    );
+
+    // console.log(sql_search_joins_items);
+    // console.log(sql_joins);
+
+    // joins x joins_items
+    const joins = await Promise.all(
+      sql_joins[0].map(async (join) => {
+        const id_join = join.id;
+
+        const id_storages = join.storages_id;
+        const nama_storages = join.storages_nama;
+
+        const item = await prompt(`CALL read_joins_itemsID ("${join.id}")`);
+        const items = item[0].map((i) => {
+          const id = i.items_id;
+          const nama = i.items_nama;
+          return { id, nama };
+        });
+
+        return {
+          id: id_join,
+          storages: { id: id_storages, nama: nama_storages },
+          items,
+        };
+      })
+    );
+
+    res.status(200).json({
+      message: "Data berhasil temukan!",
+      joins,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
 // middleware tambah data
-exports.addItem = (req, res) => {
-  const { nama } = req.body;
-
-  const items = load("items");
-  // variabel items berisi semua object dari items.json yang dibungkus array
-  /* items =
-  [
-    { id: 1, nama: 'Pensil' },
-    { id: 2, nama: 'Pulpen' },
-    { id: 3, nama: 'Penghapus' },
-    { id: 4, nama: 'Kamus' },
-    { id: 5, nama: 'Peta' }
-  ]
-  */
-  const item = items.at(-1);
-  // ambil 1 items dari bawah
-  // item = { id: 5, nama: 'Peta' }
-
-  const id = item ? item.id + 1 : 1;
-  // buat auto increment
-  // nambahin 1 dari id file json
-  // 5 + 1 = 6
-
-  // kalo data gak ada, input 1 aja
-
-  items.push({ id, nama });
-  // req.body di push ke array item
-  /* items = (datanya nambah)
-  [
-    { id: 1, nama: 'Pensil' },
-    { id: 2, nama: 'Pulpen' },
-    { id: 3, nama: 'Penghapus' },
-    { id: 4, nama: 'Kamus' },
-    { id: 5, nama: 'Peta' },
-    { id: 6, nama: 'Handuk' }
-  ]
- */
-  save("items", items);
-  // file json di tulis ulang dengan isi array items
-
-  res.status(201).json({
-    message: "Data ditambahkan!",
-  });
+exports.createItem = async (req, res) => {
+  try {
+    const { nama } = req.body;
+    const createdItem = await prompt(`CALL create_items("${nama}")`);
+    res.status(200).json({
+      message: "Data berhasil dibuat!",
+      createdItem,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
 // middleware ubah data
-exports.updateItem = (req, res) => {
-  const { id } = req.params;
-  const { nama } = req.body;
-
-  const items = load("items");
-  // variabel items berisi semua object dari items.json yang dibungkus array
-  /* items =
-  [
-    { id: 1, nama: 'Pensil' },
-    { id: 2, nama: 'Pulpen' },
-    { id: 3, nama: 'Penghapus' },
-    { id: 4, nama: 'Kamus' },
-    { id: 5, nama: 'Peta' }
-  ]
-  */
-
-  const item = items.find((item) => item.id === parseInt(id));
-  // variabel item berisi salah satu object dari items.json
-  // berdasarkan id yg sama dengan id parameter url
-
-  const index = items.findIndex((item) => item.id === parseInt(id));
-  // variabel item berisi salah satu "index" dari items.json
-  // berdasarkan id yg sama dengan id parameter url
-  // misal: index ke- 2
-
-  console.log("item", items);
-  console.log("index", index);
-
-  if (!item)
-    // nggak bisa di kunci pakai const index => if (!index)
-    // pesan error TypeError: Cannot set properties of undefined
-
-    // kalo data nggak ada hasil, if (index === -1)
-    // jadi tangkep -1 nya
-    return res.status(404).json({
-      message: "Data tidak ditemukan!",
+exports.updateItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nama } = req.body;
+    const updatedItem = await prompt(`CALL update_items("${id}", "${nama}")`);
+    if (updatedItem.affectedRows === 0)
+      return res.status(404).json({
+        message: "Data tidak ditemukan!",
+      });
+    res.status(200).json({
+      message: "Data berhasil diubah!",
+      updatedItem,
     });
-
-  items[index].nama = nama;
-  // isi array di ubah dengan req.body.nama berdasakan index
-  /* items =
-  [
-    { id: 1, nama: 'Pensil' }, 0
-    { id: 2, nama: 'Pulpen' }, 1
-    { id: 3, nama: 'Data yang Diubah' }, <== index ke- 2
-    { id: 4, nama: 'Kamus' }, 3
-    { id: 5, nama: 'Peta' } 4
-  ]
-  */
-
-  save("items", items);
-  // file json di tulis ulang dengan isi array items
-
-  res.status(201).json({
-    message: "Data diubah!",
-  });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
 // middleware hapus data
-exports.deleteItem = (req, res) => {
-  const { id } = req.params;
-
-  const items = load("items");
-  // variabel items berisi semua object dari items.json yang dibungkus array
-  /* items =
-  [
-    { id: 1, nama: 'Pensil' },
-    { id: 2, nama: 'Pulpen' },
-    { id: 3, nama: 'Penghapus' },
-    { id: 4, nama: 'Kamus' },
-    { id: 5, nama: 'Peta' }
-  ]
-  */
-
-  const item = items.find((item) => item.id === parseInt(id));
-  // variabel item berisi salah satu object dari items.json
-  // berdasarkan id yg sama dengan id parameter url
-
-  const filtereditems = items.filter((item) => item.id !== parseInt(id));
-  // variabel items berisi semua object dari items.json yang dibungkus array
-  // kecuali salah satu object yg memiliki id yg sama dengan id parameter url
-  // misal { id: 3, nama: 'Penghapus' },
-
-  // hasil
-
-  /* filtereditems =
-  [
-    { id: 1, nama: 'Pensil' },
-    { id: 2, nama: 'Pulpen' },    disingkirkan!
-                        ==========> { id: 3, nama: 'Penghapus' },
-    { id: 4, nama: 'Kamus' },
-    { id: 5, nama: 'Peta' } 
-  ]
-  */
-
-  if (!item)
-    // tidak bisa di kunci pakai const filtereditems kerena return-nya selalu ada,
-    // meskipun object yg memiliki id yg sama dengan id parameter url tidak ada
-
-    // kalo mau if (JSON.stringify(filtereditems) === JSON.stringify(items))
-    // biar bisa baca arraynya (bukan pointer dalam memory)
-    // maka parse dulu arraynya jadi string
-
-    return res.status(404).json({
-      message: "Data tidak ditemukan!",
+exports.deleteItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedItem = await prompt(`CALL delete_items("${id}")`);
+    if (deletedItem.affectedRows === 0)
+      return res.status(404).json({
+        message: "Data tidak ditemukan!",
+      });
+    res.status(200).json({
+      message: "Data berhasil hapus!",
+      deletedItem,
     });
-
-  save("items", filtereditems);
-  // file json di tulis ulang dengan isi array filteredItems
-
-  res.status(200).json({
-    message: "Data dihapus!",
-  });
-};
-
-// middleware cari data di file joins.json
-exports.searchItem = (req, res) => {
-  const { nama } = req.body;
-
-  const joins = load("joins");
-  const items = load("items");
-  const storages = load("storages");
-
-  const searchItems = items.find((item) => item.nama === nama);
-  if (!searchItems)
-    return res.status(200).json({
-      message: "Data tidak ditemukan!",
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
     });
-
-  const searchJoins = joins.find((join) =>
-    join.items.some((item) => item === searchItems.id)
-  );
-  if (!searchJoins)
-    return res.status(200).json({
-      message: "Data tidak ditemukan!",
-    });
-
-  const isiSearchItems = searchJoins.items.map((search) =>
-    items.find((item) => item.id === search)
-  );
-  const isiSearchStorages = storages.find(
-    (storage) => storage.id === searchJoins.storages
-  );
-
-  const view = {
-    id: searchJoins.id,
-    storages: isiSearchStorages,
-    items: isiSearchItems,
-  };
-
-  res.status(200).json({
-    message: "Data ketemu!",
-    result: view,
-  });
+  }
 };

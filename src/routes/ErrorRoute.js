@@ -1,7 +1,7 @@
-// import module npm
+// import module third party
 const router = require("express").Router();
 
-// import module buatan sendiri
+// import module local
 const { useError } = require("../controllers/ErrorController");
 
 // route 404

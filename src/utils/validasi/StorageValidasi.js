@@ -1,31 +1,55 @@
-// import module npm
+// import module third party
 const validator = require("validator");
 
-// import module buatan sendiri
-const { load } = require("../../config/modify");
+// import module local
+const prompt = require("../../config/Query");
 
 // validasi salah tulis
 const body = (value, nama) => {
   if (!nama) value.nama = "Nama tidak boleh kosong!";
-  else if (!validator.isAlpha(nama, "en-US", { ignore: " " }))
+  else if (nama.length > 20)
+    value.nama = "Nama tidak boleh lebih dari 20 karakter";
+  else if (
+    typeof nama !== "string" ||
+    !validator.isAlpha(nama, "en-US", { ignore: " " })
+  )
     value.nama = "Nama harus huruf!";
+
   return value;
 };
 
-// cari data dalam file json
-const find = (nama) => {
-  const storages = load("storages");
-  return storages.find((storage) => storage.nama === nama);
+// cari data sendiri yang kembar
+const find = async (nama) => await prompt(`CALL read_storagesNama("${nama}")`);
+
+// cari "apakah id sudah digunakan sebagai isi storages dalam tabel joins?"
+const findRestrict = async (id) =>
+  await prompt(`CALL read_joinsStoragesID("${id}")`);
+
+// middleware validasi salah tulis
+exports.valid = (req, res, next) => {
+  const value = {};
+  const { nama } = req.body;
+
+  body(value, nama);
+  if (Object.keys(value).length > 0)
+    return res.status(400).json({
+      message: value,
+    });
+
+  next();
 };
 
 // middleware validasi tambah
-exports.validAdd = (req, res, next) => {
+exports.validCreate = async (req, res, next) => {
   const value = {};
   const { nama } = req.body;
-  const findNama = find(nama);
-
   body(value, nama);
-  if (findNama) value.namaDuplikat = "Nama sudah digunakan!";
+
+  if (Object.keys(value).length === 0) {
+    const findNama = await find(nama);
+    if (findNama[0].length > 0) value.namaDuplikat = "Nama sudah digunakan!";
+  }
+
   if (Object.keys(value).length > 0)
     return res.status(400).json({
       message: value,
@@ -35,15 +59,19 @@ exports.validAdd = (req, res, next) => {
 };
 
 // middleware validasi ubah
-exports.validUpdate = (req, res, next) => {
+exports.validUpdate = async (req, res, next) => {
   const value = {};
   const { id } = req.params;
   const { nama } = req.body;
-  const findNama = find(nama);
-
   body(value, nama);
-  if (findNama && findNama.id !== parseInt(id))
-    value.namaDuplikat = "Nama sudah digunakan oleh data lain!";
+
+  if (Object.keys(value).length === 0) {
+    const findNama = await find(nama);
+    const notID = findNama[0].filter((find) => find.id !== parseInt(id));
+    if (findNama[0].length > 0 && notID.length > 0)
+      value.namaDuplikat = "Nama sudah digunakan oleh data lain!";
+  }
+
   if (Object.keys(value).length > 0)
     return res.status(400).json({
       message: value,
@@ -53,15 +81,14 @@ exports.validUpdate = (req, res, next) => {
 };
 
 // middleware validasi hapus
-exports.validDelete = (req, res, next) => {
+exports.validDelete = async (req, res, next) => {
   const { id } = req.params;
-  const joins = load("joins");
-  const restrict = joins.find((join) => join.id === parseInt(id));
+  const restrict = await findRestrict(id);
 
-  if (restrict) {
+  if (restrict[0].length > 0)
     return res.status(400).json({
-      message: "Hapus terlebih dahulu data pada join!",
+      message: "Hapus terlebih dahulu data pada joins!",
     });
-  }
+
   next();
 };

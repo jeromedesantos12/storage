@@ -1,33 +1,33 @@
 ### 
-GET http://localhost:8080/item/get
+GET http://localhost:4000/item/read
 
 ### 
-GET http://localhost:8080/item/get/9
+GET http://localhost:4000/item/read/1
 
 ### 
-GET http://localhost:8080/item/search
+GET http://localhost:4000/item/search
 Content-Type: application/json
 
 {
-    "nama": "Peta"
+    "nama": "Pensil"
 }
 
 
 ###
-POST http://localhost:8080/item/add
+POST http://localhost:4000/item/create
 Content-Type: application/json
 
 {
-    "nama": "Peta Satu"
+    "nama": "Sample"
 }
 
 ###
-PUT http://localhost:8080/item/update/13
+PUT http://localhost:4000/item/update/26
 Content-Type: application/json
 
 {
-    "nama": "Peta Tiga"
+    "nama": "Sample"
 }
 
 ### 
-DELETE http://localhost:8080/item/delete/12
+DELETE http://localhost:4000/item/delete/1

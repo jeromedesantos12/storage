@@ -1,22 +1,20 @@
-// import module npm
+// import module third party
 const router = require("express").Router();
 
-// import module buatan sendiri
-// utk validasi
-const { validAdd, validUpdate } = require("../utils/validasi/JoinValidasi");
-// utk controller
+// import module local
+const { validCreate, validUpdate } = require("../utils/validasi/JoinValidasi");
 const {
-  getJoins,
-  getJoinById,
-  addJoin,
+  readJoins,
+  readJoinById,
+  createJoin,
   updateJoin,
   deleteJoin,
 } = require("../controllers/JoinController");
 
 // route join
-router.get("/get", getJoins);
-router.get("/get/:id", getJoinById);
-router.post("/add", validAdd, addJoin);
+router.get("/read", readJoins);
+router.get("/read/:id", readJoinById);
+router.post("/create", validCreate, createJoin);
 router.put("/update/:id", validUpdate, updateJoin);
 router.delete("/delete/:id", deleteJoin);
 

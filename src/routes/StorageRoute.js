@@ -1,26 +1,28 @@
-// import module buatan sendiri
-// utk validasi
+// import module third party
 const router = require("express").Router();
+
+// import module local
 const {
-  validAdd,
+  valid,
+  validCreate,
   validUpdate,
   validDelete,
 } = require("../utils/validasi/StorageValidasi");
-// utk controller
+
 const {
-  getStorages,
-  getStorageById,
+  readStorages,
+  readStorageById,
   searchStorage,
-  addStorage,
+  createStorage,
   updateStorage,
   deleteStorage,
 } = require("../controllers/StorageController");
 
 // route storage
-router.get("/get", getStorages);
-router.get("/get/:id", getStorageById);
-router.get("/search", searchStorage);
-router.post("/add", validAdd, addStorage);
+router.get("/read", readStorages);
+router.get("/read/:id", readStorageById);
+router.get("/search", valid, searchStorage);
+router.post("/create", validCreate, createStorage);
 router.put("/update/:id", validUpdate, updateStorage);
 router.delete("/delete/:id", validDelete, deleteStorage);
 

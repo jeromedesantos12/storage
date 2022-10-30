@@ -1,26 +1,26 @@
 ### 
-GET http://localhost:8080/join/get
+GET http://localhost:4000/join/read
 
 ### 
-GET http://localhost:8080/join/get/1
+GET http://localhost:4000/join/read/1
 
 ###
-POST http://localhost:8080/join/add
+POST http://localhost:4000/join/create
 Content-Type: application/json
 
 {
-    "storages": 4,
-    "items": ["12312"]
+    "storages": 5,
+    "items": [10, 11]
 }
 
 ###
-PUT http://localhost:8080/join/update/1
+PUT http://localhost:4000/join/update/1
 Content-Type: application/json
 
 {
     "storages": 1,
-    "items": [1, 2, 8]
+    "items": [2]
 }
 
 ### 
-DELETE http://localhost:8080/join/delete/4
+DELETE http://localhost:4000/join/delete/5
