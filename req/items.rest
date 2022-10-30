@@ -1,0 +1,33 @@
+### 
+GET http://localhost:8080/item/get
+
+### 
+GET http://localhost:8080/item/get/9
+
+### 
+GET http://localhost:8080/item/search
+Content-Type: application/json
+
+{
+    "nama": "Peta"
+}
+
+
+###
+POST http://localhost:8080/item/add
+Content-Type: application/json
+
+{
+    "nama": "Peta Satu"
+}
+
+###
+PUT http://localhost:8080/item/update/13
+Content-Type: application/json
+
+{
+    "nama": "Peta Tiga"
+}
+
+### 
+DELETE http://localhost:8080/item/delete/12

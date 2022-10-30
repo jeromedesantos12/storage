@@ -1,0 +1,32 @@
+### 
+GET http://localhost:8080/storage/get
+
+### 
+GET http://localhost:8080/storage/get/1
+
+### 
+GET http://localhost:8080/storage/search
+Content-Type: application/json
+
+{
+    "nama": "Kardus A"
+}
+
+###
+POST http://localhost:8080/storage/add
+Content-Type: application/json
+
+{
+    "nama": "Kardus CD"
+}
+
+###
+PUT http://localhost:8080/storage/update/27
+Content-Type: application/json
+
+{
+    "nama": "Kardus DC"
+}
+
+### 
+DELETE http://localhost:8080/storage/delete/27
